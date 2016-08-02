@@ -1,0 +1,9 @@
+*.o
+*.a
+*.so
+
+node_modules
+.npm
+
+public/*.css
+public/*.js

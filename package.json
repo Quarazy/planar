@@ -1,0 +1,21 @@
+{
+  "name": "planar",
+  "version": "1.0.0",
+  "description": "Multiplayer 2D game",
+  "dependencies": {
+    "gulp": "*",
+    "gulp-concat": "*",
+    "gulp-livereload": "*",
+    "gulp-sourcemaps": "*",
+    "gulp-stylus": "*",
+    "run-sequence": "*"
+  },
+  "devDependencies": {
+    "jasmine-core": "^2.4.1",
+    "karma": "^0.13.22",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-cljs-test": "^0.1.0",
+    "karma-jasmine": "^1.0.2"
+  },
+  "author": "quarazy"
+}
