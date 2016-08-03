@@ -1,29 +1,60 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
 )
 
-type client struct {
-	// The websocket connection
-	ws *websocket.Conn
-
-	// Messsages to be sent
-	send chan []byte
-}
-
-// newClient instantiates a new client
-func newClient(ws *websocket.Conn) *client {
-	return &client{
-		ws:   ws,
-		send: make(chan []byte, 256),
-	}
-}
-
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin:     func(r *http.Request) bool { return true },
+}
+
+type client struct {
+	// Unique identifier for client
+	id uint64
+
+	// The websocket connection
+	ws *websocket.Conn
+
+	// Messsages to be sent
+	send chan *Message
+
+	// Reference to the hub
+	hub *hub
+}
+
+// newClient instantiates a new client
+func newClient(id uint64, ws *websocket.Conn, hub *hub) *client {
+	return &client{
+		id:   id,
+		ws:   ws,
+		send: make(chan *Message, 256),
+		hub:  hub,
+	}
+}
+
+func (c *client) reader() {
+	for {
+		message := &Message{}
+		if err := c.ws.ReadJSON(message); err != nil {
+			log.Println("Could not read message", err)
+			continue
+		}
+		c.hub.broadcast <- message
+	}
+}
+
+// writer should run in it's own go process
+func (c *client) writer() {
+	for message := range c.send {
+		if err := c.ws.WriteJSON(message); err != nil {
+			continue
+		}
+	}
+
+	c.ws.Close()
 }

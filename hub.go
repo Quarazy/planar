@@ -10,6 +10,9 @@ type hub struct {
 
 	// Unregister requests from the clients
 	unregister chan *client
+
+	// Inbound messages from the clients.
+	broadcast chan *Message
 }
 
 // newHub instantiates a nes hub
@@ -18,6 +21,7 @@ func newHub() *hub {
 		register:   make(chan *client),
 		unregister: make(chan *client),
 		clients:    make(map[*client]bool),
+		broadcast:  make(chan *Message),
 	}
 }
 
@@ -33,6 +37,17 @@ func (h *hub) run() {
 
 				// Closes the channel
 				close(client.send)
+			}
+		case message := <-h.broadcast:
+			for client := range h.clients {
+				select {
+				case client.send <- message:
+				// If connection's send buffer is full, then the hub assumes that
+				// the client is dead or stuck. In this case, it unregisters the conn
+				default:
+					delete(h.clients, client)
+					close(client.send)
+				}
 			}
 		}
 	}

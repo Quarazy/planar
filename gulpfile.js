@@ -44,6 +44,7 @@ gulp.task('build', [
 gulp.task('watch', function () {
   livereload.listen();
   gulp.watch(PATHS.stylesheets, ['stylesheets']);
+  gulp.watch(PATHS.sources, ['sources']);
 })
 
 gulp.task('stylesheets', function () {
