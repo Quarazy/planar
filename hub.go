@@ -13,16 +13,26 @@ type hub struct {
 
 	// Inbound messages from the clients.
 	broadcast chan *Message
+
+	steps []map[uint16]*Message
 }
 
-// newHub instantiates a nes hub
+// newHub instantiates a new hub
 func newHub() *hub {
-	return &hub{
+	hub := &hub{
 		register:   make(chan *client),
 		unregister: make(chan *client),
 		clients:    make(map[*client]bool),
 		broadcast:  make(chan *Message),
+		steps:      make([]map[uint16]*Message, 2),
 	}
+
+	// initialize steps map
+	for i := 0; i < 2; i++ {
+		hub.steps[i] = make(map[uint16]*Message)
+	}
+
+	return hub
 }
 
 // run runs in its own goroutine
@@ -39,14 +49,22 @@ func (h *hub) run() {
 				close(client.send)
 			}
 		case message := <-h.broadcast:
-			for client := range h.clients {
-				select {
-				case client.send <- message:
-				// If connection's send buffer is full, then the hub assumes that
-				// the client is dead or stuck. In this case, it unregisters the conn
-				default:
-					delete(h.clients, client)
-					close(client.send)
+			// Send move to another channel if I ever use multiple go routines
+			// Right now there's only one go routine, so this logic will be safe
+			h.steps[message.Id][message.Step] = message
+
+			if allStepsReceived(message.Step, h.steps) {
+				for _, v := range h.steps {
+					for client := range h.clients {
+						select {
+						case client.send <- v[message.Step]:
+							// If connection's send buffer is full, then the hub assumes that
+							// the client is dead or stuck. In this case, it unregisters the conn
+						default:
+							delete(h.clients, client)
+							close(client.send)
+						}
+					}
 				}
 			}
 		}
@@ -62,4 +80,16 @@ func (h *hub) Register(c *client) error {
 // Size returns the number of clients
 func (h *hub) Size() int {
 	return len(h.clients)
+}
+
+// allStepsReceived checks to see if all steps
+// have been received
+func allStepsReceived(step uint16, steps []map[uint16]*Message) bool {
+	for _, v := range steps {
+		if _, ok := v[step]; !ok {
+			return false
+		}
+	}
+
+	return true
 }

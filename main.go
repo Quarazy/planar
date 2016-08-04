@@ -32,8 +32,6 @@ func (s *Server) serveConnect(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	atomic.AddUint64(&s.counter, 1)
-
 	client := newClient(s.counter, conn, s.hub)
 	defer func() {
 		s.hub.unregister <- client
@@ -56,5 +54,6 @@ func (s *Server) serveConnect(w http.ResponseWriter, r *http.Request) {
 		Id:   s.counter,
 	}
 
+	atomic.AddUint64(&s.counter, 1)
 	client.reader()
 }
