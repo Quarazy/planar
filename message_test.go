@@ -16,7 +16,7 @@ var _ = Describe("Message", func() {
 
 	BeforeEach(func() {
 		message = &Message{}
-		byt = []byte(`{"type":1,"id":13,"msec":16.66,"x":1.3,"y":-2.2,"z":0,"step":56}`)
+		byt = []byte(`{"type":1,"id":13,"msec":16.66,"x":1.3,"y":-2.2,"z":0,"step":56,"buttons":0}`)
 	})
 
 	It("Serializes", func() {
