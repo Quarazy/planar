@@ -8,7 +8,7 @@ import (
 
 func main() {
 	hub := newHub()
-	go hub.run()
+	newInterpolation(hub)
 
 	s := &Server{hub: hub}
 	http.Handle("/ws", s)
@@ -34,6 +34,7 @@ func (s *Server) serveConnect(w http.ResponseWriter, r *http.Request) {
 
 	client := newClient(s.counter, conn, s.hub)
 	defer func() {
+		log.Printf("Player %d removed\n", client.id)
 		s.hub.unregister <- client
 		client.ws.Close()
 	}()
@@ -48,10 +49,10 @@ func (s *Server) serveConnect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send world information back to user
-	// TODO(quarazy): Need to broadcast location of all existing players
 	client.send <- &Message{
-		Type: User,
-		Id:   s.counter,
+		Type:    User,
+		Id:      s.counter,
+		Players: s.hub.ConnectedPlayers(),
 	}
 
 	atomic.AddUint64(&s.counter, 1)

@@ -41,10 +41,13 @@ func (c *client) reader() {
 	for {
 		message := &Message{}
 		if err := c.ws.ReadJSON(message); err != nil {
-			log.Println("Could not read message", err)
-			continue
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+				log.Printf("Close error: %v\n", err)
+			}
+			log.Printf("Error when reading message: %s\n", err)
+			break
 		}
-		c.hub.broadcast <- message
+		c.hub.actions <- message
 	}
 }
 
