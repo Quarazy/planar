@@ -1,8 +1,6 @@
 package main
 
-import (
-	"time"
-)
+import "time"
 
 // tickRate is the number of times a second the server will run a simulation of the game
 // During each tick, server processes user input, runs simulation, takes a snapshot and broadcasts these back to the client
